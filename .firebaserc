@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "staging": "starter-project-staging",
+    "stable": "starter-project-stable",
+    "production": "starter-project-production"
+  }
+}

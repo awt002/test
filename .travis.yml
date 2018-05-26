@@ -1,0 +1,43 @@
+# safelist
+branches:
+  only:
+  - staging
+  - master
+  - production
+language: node_js
+node_js:
+  - "stable"
+sudo: false
+cache:
+  directories:
+  - node_modules
+install:
+  - npm install
+  - cd ./client && npm install && cd ..
+  - cd ./functions && npm install && cd ..
+script:
+  - cd ./client && npm test && cd ..
+  - npm run coverage
+  - cd ./client && npm run build && cd ..
+deploy:
+  - provider: firebase
+    project: staging
+    token:
+      secure: 1/RXhU2900ZjUhslHkvcRIj_kjPTxbRkCgTkRO-ZMRBXk
+    skip_cleanup: true
+    on:
+      branch: staging
+  - provider: firebase
+    project: stable
+    token:
+      secure: 1/fzJLVfsReyUzhByaws7phHJT3Vs-pg-9oy7N31lNorg
+    skip_cleanup: true
+    on:
+      branch: master
+  - provider: firebase
+    project: production
+    token:
+      secure: 1/ZUUl0NIHtv2Fj0I8C0_cTK8GItn67cgWWbnc0zolXgw
+    skip_cleanup: true
+    on:
+      branch: production
