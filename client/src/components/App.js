@@ -1,45 +1,72 @@
-/**
- * UI for testing functionality of PetersComponent 
- * @author chumothyLee
- */
 import React, { Component } from 'react';
-import { Container, Row, Col, Form, Label, Input } from 'reactstrap';
-import { GithubPicker } from 'react-color';
-import PetersComponent from './PetersComponent';
+import { Container, Row, Col, Form, Input, Button, Alert} from 'reactstrap';
+import fire from '../fire';
 
 class App extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-        color : '#000',
-        times : 1
+        user  : "User1ID", 
+        dispVal: "",
+        friends: "None"
     }
+    fire.database().ref(this.state.user+"/Friends").once("value").then( (snapshot) => {
+      this.setState({friends: snapshot.val()})
+    })
   }
 
-  /**
-   * Updates component's state.color value when user selects a new color on GithubPicker
-   * @public
-   * @param {color} color New color value for PetersComponent. Use hex key.
-   * @returns {null}
-   */
-  handleChange = (color) => {
-    console.log(color);
-    this.setState({ color : color.hex });
+  handleAddFriend =(event) => {
+    const friend_val = document.getElementById('friend_id').value
+    var updates = {}
+    var updates2 = {}
+    updates['/Friends'] = friend_val
+    updates2['/Friends'] = this.state.user
+    fire.database().ref(this.state.user).update(updates)
+    fire.database().ref(friend_val).update(updates2)
+    fire.database().ref(this.state.user+"/Friends").once("value").then( (snapshot) => {
+      this.setState({friends: snapshot.val()})
+    })
   }
 
-  /**
-   * Updates component's state.time value when user inputs numerical value to #timeSelector
-   * @public
-   * @param {*} event Event from which to take update number value
-   * @returns {null}
-   */
-  handleTimeChange = (event) => {
-    const times = event.target.value;
-    console.log(times);
-    if (!isNaN(times) && times > 0) {
-      this.setState({ times : event.target.value });
+  genFriendCode = (event) => {
+    this.setState({dispVal: this.state.user})
+    var textField = document.createElement('textarea')
+    textField.innerText = this.state.user
+    document.body.appendChild(textField)
+    textField.select()
+    document.execCommand('copy')
+    textField.remove()
+  }
+
+  userSwap =(event) => {
+    var temp = ""
+    if (this.state.user === "User1ID")
+    {
+      this.setState({user: "User2ID"})
+      temp = "User2ID"
     }
+    else
+    {
+      this.setState({user: "User1ID"})
+      temp = "User1ID"
+    }
+    fire.database().ref(temp+"/Friends").once("value").then( (snapshot) => {
+      this.setState({friends: snapshot.val()})
+    })
+  }
+
+  removeFriend = (event) => {
+    const friend_val = this.state.friends
+    var updates = {}
+    var updates2 = {}
+    updates['/Friends'] = "None"
+    fire.database().ref(this.state.user).update(updates)
+    fire.database().ref(friend_val).update(updates)
+
+    fire.database().ref(this.state.user+"/Friends").once("value").then( (snapshot) => {
+      this.setState({friends: snapshot.val()})
+    })
   }
 
   render() {
@@ -48,14 +75,18 @@ class App extends Component {
             <Row>
                 <Col>
                   <Form>
-                    <Label for="colorPicker"> Color of text </Label>
-                    <GithubPicker id="colorPicker" color={this.state.color} onChange={this.handleChange}/>
-                    <Label for="timesSelector"> Times to print text </Label>
-                    <Input id="timesSelector" type="textarea" onChange={this.handleTimeChange}/>
+                    <Button color="success" onClick={this.genFriendCode}>Generate Friend Code</Button>
+                    <Alert color="success" id="copyID">{this.state.dispVal}</Alert>
+                    <br />
+                    <Button color="primary" onClick={this.handleAddFriend}>Add Friend</Button>
+                    <Input type="text" name="link" id="friend_id" placeholder="Friend ID" /><br/>
+                    <Button color="danger" onClick={this.removeFriend}>Remove Friend</Button><br/>
+                    <Button color="warning" onClick={this.userSwap}>Swap User</Button>
                   </Form>
                 </Col>
                 <Col>
-                    <PetersComponent color={this.state.color} times={this.state.times}/>
+                    <Alert color="primary">Currently {this.state.user}</Alert>
+                    <Alert color="info">Current Friends: {this.state.friends}</Alert>
                 </Col>
             </Row>
         </Container>
